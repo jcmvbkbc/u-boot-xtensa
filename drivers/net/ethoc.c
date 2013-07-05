@@ -248,6 +248,9 @@ static int ethoc_init_ring(struct eth_device *dev)
 {
 	struct ethoc *priv = (struct ethoc *)dev->priv;
 	struct ethoc_bd bd;
+#ifdef CONFIG_SYS_ETHOC_BUFFER_ADDR
+	unsigned long addr = CONFIG_SYS_ETHOC_BUFFER_ADDR;
+#endif
 	int i;
 
 	priv->cur_tx = 0;
@@ -258,6 +261,10 @@ static int ethoc_init_ring(struct eth_device *dev)
 	bd.stat = TX_BD_IRQ | TX_BD_CRC;
 
 	for (i = 0; i < priv->num_tx; i++) {
+#ifdef CONFIG_SYS_ETHOC_BUFFER_ADDR
+		bd.addr = addr;
+		addr += PKTSIZE_ALIGN;
+#endif
 		if (i == priv->num_tx - 1)
 			bd.stat |= TX_BD_WRAP;
 
@@ -267,7 +274,12 @@ static int ethoc_init_ring(struct eth_device *dev)
 	bd.stat = RX_BD_EMPTY | RX_BD_IRQ;
 
 	for (i = 0; i < priv->num_rx; i++) {
+#ifdef CONFIG_SYS_ETHOC_BUFFER_ADDR
+		bd.addr = addr;
+		addr += PKTSIZE_ALIGN;
+#else
 		bd.addr = (u32)net_rx_packets[i];
+#endif
 		if (i == priv->num_rx - 1)
 			bd.stat |= RX_BD_WRAP;
 
@@ -372,7 +384,12 @@ static int ethoc_rx(struct eth_device *dev, int limit)
 		if (ethoc_update_rx_stats(&bd) == 0) {
 			int size = bd.stat >> 16;
 			size -= 4;	/* strip the CRC */
+#ifdef CONFIG_SYS_ETHOC_BUFFER_ADDR
+			memcpy(net_rx_packets[0], (void *)bd.addr, size);
+			net_process_received_packet(net_rx_packets[0], size);
+#else
 			net_process_received_packet((void *)bd.addr, size);
+#endif
 		}
 
 		/* clear the buffer descriptor so it can be reused */
@@ -428,7 +445,11 @@ static int ethoc_send(struct eth_device *dev, void *packet, int length)
 		bd.stat |= TX_BD_PAD;
 	else
 		bd.stat &= ~TX_BD_PAD;
+#ifdef CONFIG_SYS_ETHOC_BUFFER_ADDR
+	memcpy((void *)bd.addr, (const void *)packet, length);
+#else
 	bd.addr = (u32)packet;
+#endif
 
 	flush_dcache_range(bd.addr, bd.addr + length);
 	bd.stat &= ~(TX_BD_STATS | TX_BD_LEN_MASK);
