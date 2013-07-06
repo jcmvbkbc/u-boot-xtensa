@@ -47,6 +47,9 @@ config SPARC
 config X86
 	bool "x86 architecture"
 
+config XTENSA
+	bool "Xtensa architecture"
+
 endchoice
 
 source "arch/arc/Kconfig"
@@ -64,3 +67,4 @@ source "arch/sandbox/Kconfig"
 source "arch/sh/Kconfig"
 source "arch/sparc/Kconfig"
 source "arch/x86/Kconfig"
+source "arch/xtensa/Kconfig"
