@@ -83,6 +83,13 @@ config X86
 	select DM_SPI
 	select DM_SPI_FLASH
 
+config XTENSA
+	bool "Xtensa architecture"
+	select CREATE_ARCH_SYMLINK
+	select HAVE_GENERIC_BOARD
+	select SUPPORT_OF_CONTROL
+	select SYS_GENERIC_BOARD
+
 endchoice
 
 config SYS_ARCH
@@ -156,3 +163,4 @@ source "arch/sandbox/Kconfig"
 source "arch/sh/Kconfig"
 source "arch/sparc/Kconfig"
 source "arch/x86/Kconfig"
+source "arch/xtensa/Kconfig"

@@ -1,0 +1,26 @@
+menu "Xtensa architecture"
+	depends on XTENSA
+
+config SYS_ARCH
+	string
+	default "xtensa"
+
+config SYS_CPU
+	string "Xtensa Core Variant"
+
+choice
+	prompt "Target select"
+
+
+endchoice
+
+
+config HAVE_SYS_ASCDISP
+	bool
+
+config SYS_ASCDISP
+	bool "System LCD Display"
+	default y
+	depends on HAVE_SYS_ASCDISP
+
+endmenu
