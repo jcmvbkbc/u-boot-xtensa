@@ -563,6 +563,28 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
+#elif defined(CONFIG_XTENSA)
+
+int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	bd_t *bd = gd->bd;
+
+	print_num("boot_params",	(ulong)bd->bi_boot_params);
+	print_num("memstart",		(ulong)bd->bi_memstart);
+	print_lnum("memsize",		(u64)bd->bi_memsize);
+	print_num("flashstart",		(ulong)bd->bi_flashstart);
+	print_num("flashsize",		(ulong)bd->bi_flashsize);
+	print_num("flashoffset",	(ulong)bd->bi_flashoffset);
+
+#if defined(CONFIG_CMD_NET)
+	print_eth(0);
+	printf("ip_addr     = %s\n", getenv("ipaddr"));
+#endif
+	printf("baudrate    = %d bps\n", gd->baudrate);
+
+	return 0;
+}
+
 #else
  #error "a case for this architecture does not exist!"
 #endif
