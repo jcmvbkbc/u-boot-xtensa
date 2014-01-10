@@ -656,6 +656,7 @@ endif
 
 libs-$(CONFIG_ARM) += arch/arm/cpu/
 libs-$(CONFIG_PPC) += arch/powerpc/cpu/
+libs-$(CONFIG_XTENSA) += arch/xtensa/cpu/
 
 libs-y += $(if $(BOARDDIR),board/$(BOARDDIR)/)
 

@@ -534,3 +534,8 @@ N: Philip Balister
 E: philip@opensdr.com
 D: Port to Lyrtech SFFSDR development board.
 W: www.opensdr.com
+
+N: Chris Zankel
+E: chris@zankel.net
+D: Port to Xtensa
+W: www.linux-xtensa.org
