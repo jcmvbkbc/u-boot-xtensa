@@ -290,6 +290,80 @@ static int ethoc_init_ring(struct eth_device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_SYS_ETHOC_SETUP_PHY
+
+static u16 ethoc_mii_read(struct eth_device *dev, u8 phy, u8 reg)
+{
+	ulong tmo = get_timer(0);
+
+	ethoc_write(dev, MIIADDRESS, MIIADDRESS_ADDR(phy, reg));
+	ethoc_write(dev, MIICOMMAND, MIICOMMAND_READ);
+
+	while (get_timer(tmo) < CONFIG_SYS_HZ) {
+		u32 status = ethoc_read(dev, MIISTATUS);
+		if (!(status & MIISTATUS_BUSY)) {
+			u32 data = ethoc_read(dev, MIIRX_DATA);
+			/* reset MII command register */
+			ethoc_write(dev, MIICOMMAND, 0);
+			return data;
+		}
+	}
+	return 0xffff;
+}
+
+static void ethoc_mii_write(struct eth_device *dev, u8 phy, u8 reg, u16 v)
+{
+	ulong tmo = get_timer(0);
+
+	ethoc_write(dev, MIIADDRESS, MIIADDRESS_ADDR(phy, reg));
+	ethoc_write(dev, MIITX_DATA, v);
+	ethoc_write(dev, MIICOMMAND, MIICOMMAND_WRITE);
+
+	while (get_timer(tmo) < CONFIG_SYS_HZ) {
+		u32 stat = ethoc_read(dev, MIISTATUS);
+		if (!(stat & MIISTATUS_BUSY)) {
+			/* reset MII command register */
+			ethoc_write(dev, MIICOMMAND, 0);
+			return;
+		}
+	}
+}
+
+static void ethoc_setup_phy(struct eth_device *dev)
+{
+	u8 phy;
+
+	ethoc_write(dev, MIIMODER, 0xfe);
+
+	for (phy = 0; phy < 32; ++phy) {
+		if (ethoc_mii_read(dev, phy, MII_PHYSID1) != 0xffff) {
+			u16 v;
+
+			v = ethoc_mii_read(dev, phy, MII_BMSR);
+			if (!(v & BMSR_ESTATEN))
+				continue;
+
+			v = ethoc_mii_read(dev, phy, MII_CTRL1000);
+			if (!(v & (ADVERTISE_1000FULL | ADVERTISE_1000HALF)))
+				continue;
+
+			ethoc_mii_write(dev, phy, MII_CTRL1000,
+					v & ~(ADVERTISE_1000FULL |
+					      ADVERTISE_1000HALF));
+			v = ethoc_mii_read(dev, phy, MII_BMCR);
+			ethoc_mii_write(dev, phy, MII_BMCR, v | BMCR_RESET);
+		}
+	}
+}
+
+#else
+
+static inline void ethoc_setup_phy(struct eth_device *dev)
+{
+}
+
+#endif
+
 static int ethoc_reset(struct eth_device *dev)
 {
 	u32 mode;
@@ -310,6 +384,8 @@ static int ethoc_reset(struct eth_device *dev)
 	mode |= MODER_FULLD;
 	ethoc_write(dev, MODER, mode);
 	ethoc_write(dev, IPGT, 0x15);
+
+	ethoc_setup_phy(dev);
 
 	ethoc_ack_irq(dev, INT_MASK_ALL);
 	ethoc_enable_rx_and_tx(dev);
