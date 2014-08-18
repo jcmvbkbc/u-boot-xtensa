@@ -189,12 +189,12 @@ struct ethoc_bd {
 	u32 addr;
 };
 
-static inline u32 ethoc_read(struct eth_device *dev, loff_t offset)
+static inline u32 ethoc_read(struct eth_device *dev, size_t offset)
 {
 	return readl(dev->iobase + offset);
 }
 
-static inline void ethoc_write(struct eth_device *dev, loff_t offset, u32 data)
+static inline void ethoc_write(struct eth_device *dev, size_t offset, u32 data)
 {
 	writel(data, dev->iobase + offset);
 }
